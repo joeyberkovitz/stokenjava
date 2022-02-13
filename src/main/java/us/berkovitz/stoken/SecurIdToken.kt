@@ -1,6 +1,7 @@
 package us.berkovitz.stoken
 
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.nio.charset.Charset
 import java.util.*
 import kotlin.experimental.and
@@ -28,6 +29,7 @@ class SecurIdToken() {
 	var pin = ""
 
 	var interactive = false
+	var sdtidDoc: Sdtid? = null
 
 	constructor(copyToken: SecurIdToken) : this() {
 		this.version = copyToken.version
@@ -47,6 +49,11 @@ class SecurIdToken() {
 	}
 
 	companion object {
+		fun importFile(file: File): SecurIdToken {
+			val fileText = file.readText()
+			return importString(fileText, false)
+		}
+
 		fun importString(tokenString: String, interactive: Boolean): SecurIdToken {
 			val securIdToken = SecurIdToken()
 			securIdToken.interactive = interactive
@@ -99,7 +106,8 @@ class SecurIdToken() {
 		}
 
 		private fun parseXmlStr(ctfStr: String, securIdToken: SecurIdToken): SecurIdToken {
-			return SecurIdToken()
+			val xmlDoc = Sdtid(ctfStr)
+			return xmlDoc.token
 		}
 
 		private fun numInputToBits(strIn: String, numBits: Int): ByteArray {
@@ -460,7 +468,8 @@ class SecurIdToken() {
 				throw Exception("devId required")
 		} else devId = ""
 
-		//TODO: sdtid
+		if(sdtidDoc != null)
+			return sdtidDoc!!.decrypt(pass)
 		//TODO: v3
 		return v2DecryptSeed(pass, devId)
 	}
